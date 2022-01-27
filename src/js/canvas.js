@@ -5,23 +5,23 @@ canvas.width = innerWidth
 canvas.height = innerHeight
 
 const arcMap = {
-  "UL" : {
+  "UR" : {
     direction : -1,
     start : 90,
     end : 0,
     operator : ">"
   },
-  "UR" : {
+  "UL" : {
     direction : 1,
     start : 90,
     end : 180,
     operator : "<"
   },
   "BL" : {
-    direction : 1,
+    direction : -1,
     start : 270,
-    end : 360,
-    operator : "<"
+    end : 180,
+    operator : ">"
   },
   "LB" : {
     direction : 1,
@@ -55,9 +55,28 @@ const arcMap = {
   },
 }
 
-const flow = ["UR", "LB", "LU", "RB", "RU", "BL", "LB", "RU"];
+const flow = [
+    "LB",
+    "LU",
+    "BL",
+    "RB",
+    "RU",
+    "UL",
+    "RB",
+    "RU",
+    "BR",
+    "LB",
+    "BR",
+    "LB"
+  ];
+
+const randomNumber = () => {
+  return Math.floor(Math.random() * flow.length);
+}
+
 
 let state = flow.shift();
+// let state = flow[randomNumber()];
 
 class Ball {
   constructor(x, y, radius, color) {
@@ -65,7 +84,7 @@ class Ball {
     this.y = y
     this.radius = radius;
     this.radians = Ball.D2R(arcMap[state].start);
-    this.velocity = 0.05;
+    this.velocity = 0.08;
     this.color = color;
   }
 
@@ -77,7 +96,7 @@ class Ball {
   draw() {
     c.beginPath()
     c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-    c.fillStyle = this.color
+    c.fillStyle =  this.color;
     c.fill()
     c.closePath()
   }
@@ -96,6 +115,7 @@ class Ball {
       }else{
         this.draw();
         state = flow.shift();
+        // state = flow[randomNumber()];
         if(state){
           const { start } = arcMap[state];
           this.radians = Ball.D2R(start);
@@ -107,6 +127,7 @@ class Ball {
       }else{
         this.draw();
         state = flow.shift();
+        // state = flow[randomNumber()];
         if(state){
           const { start } = arcMap[state];
           this.radians = Ball.D2R(start);
@@ -123,12 +144,12 @@ class Ball {
 
 let ball;
 function init() {
-  ball = new Ball(canvas.width / 2,  100, 5, 'blue');
+  ball = new Ball(canvas.width / 2,  canvas.height / 2, 5, 'blue');
 }
 
 function animate() {
   requestAnimationFrame(animate)
-  c.clearRect(0, 0, canvas.width, canvas.height)
+  // c.clearRect(0, 0, canvas.width, canvas.height)
   ball.update()
 }
 
