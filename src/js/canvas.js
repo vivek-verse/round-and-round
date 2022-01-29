@@ -1,6 +1,6 @@
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
-let blockSize = 150;
+let blockSize = 140; // block size in grid
 canvas.width = innerWidth
 canvas.height = innerHeight
 
@@ -80,31 +80,15 @@ const arcMap = {
 }
 
 const flow = [
-    "C_LB",
-    "C_LU",
-    "C_BL",
-    "C_RB",
-    "C_RU",
-    "C_UL",
-    "C_RB",
-    "C_RU",
-    "C_BR",
-    "C_LB",
-    "C_BR",
-    "C_LB",
-    "L_LR",
     "L_UD",
-    "L_RL",
-    "L_DU"
+    "C_UR",
+    "C_LU",
+    "C_BR",
+    "C_LB",
+    "L_UD"
 ];
 
-// const randomNumber = () => {
-//   return Math.floor(Math.random() * flow.length);
-// }
-
-
 let state = flow.shift();
-// let state = flow[randomNumber()];
 
 class Ball {
     constructor(x, y, radius, color) {
@@ -131,7 +115,6 @@ class Ball {
 
     updateStateAndRadians() {
         state = flow.shift();
-        // state = flow[randomNumber()];
         if (state) {
             const {
                 start
@@ -152,7 +135,7 @@ class Ball {
           currentState["end"] = this[axis] + currentState.direction * blockSize;
       }
 
-      this[axis] = this[axis] + currentState.direction * this.velocity * 40;
+      this[axis] = this[axis] + currentState.direction * this.velocity * 50;
       
       if (currentState["operator"] === ">") {
           if (this[axis] < currentState["end"]) {
@@ -180,6 +163,9 @@ class Ball {
         this.draw();
 
         if (montionType === "C") {
+            if(!this.radians){
+                this.radians = Ball.D2R(arcMap[state].start);
+            }
             this.radians = this.radians + direction * this.velocity;
             if (operator === ">") {
                 if (this.radians < Ball.D2R(end)) {
@@ -195,14 +181,13 @@ class Ball {
         } else if (montionType === "L") {
           this.updateLinearState(arcMap[state]);
         }
-
     }
 }
 
 let ball;
 
 function init() {
-    ball = new Ball(canvas.width / 2, canvas.height / 2, 5, 'blue');
+    ball = new Ball(canvas.width / 2, 200, 10, 'blue');
 }
 
 function animate() {
