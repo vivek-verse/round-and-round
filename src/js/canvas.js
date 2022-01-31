@@ -1,53 +1,53 @@
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
-let blockSize = 140; // block size in grid
+let blockSize = innerWidth * 0.90 / 5; // block size in grid
 canvas.width = innerWidth
 canvas.height = innerHeight
-
+const linearVelocity = 60;
 const arcMap = {
-    "C_UR": {
+    "C_LU": {//
         direction: -1,
         start: 90,
         end: 0,
         operator: ">"
     },
-    "C_UL": {
+    "C_RU": {//
         direction: 1,
         start: 90,
         end: 180,
         operator: "<"
     },
-    "C_BL": {
+    "C_RB": {//
         direction: -1,
         start: 270,
         end: 180,
         operator: ">"
     },
-    "C_LB": {
+    "C_UL": {//
         direction: 1,
         start: 0,
         end: 90,
         operator: "<"
     },
-    "C_LU": {
+    "C_BL": {//
         direction: -1,
         start: 0,
         end: -90,
         operator: ">"
     },
-    "C_RB": {
+    "C_UR": {//
         direction: -1,
         start: 180,
         end: 90,
         operator: ">"
     },
-    "C_RU": {
+    "C_BR": {
         direction: 1,
         start: 180,
         end: 270,
         operator: "<"
     },
-    "C_BR": {
+    "C_LB": {//
         direction: 1,
         start: 270,
         end: 360,
@@ -79,13 +79,43 @@ const arcMap = {
     },
 }
 
+const lastBlock = {};
+
+const curveAdjustment = (arc, x, y) => {
+    switch(arc) {
+      case "C_UL":
+        return { x : x - blockSize / 2, y};
+      case "C_BL":
+        return { x : x  - blockSize / 2, y};
+      case "C_LB":
+        return { x, y : y + blockSize / 2};
+      case "C_LU":
+        return { x, y : y - blockSize / 2};
+      case "C_BR":
+        return { x : x + blockSize / 2, y};
+      case "C_UR":
+        return { x : x + blockSize / 2, y};
+      case "C_RU":
+        return { x, y : y - blockSize / 2};
+      case "C_RB":
+        return {x, y : y + blockSize / 2}
+      default:
+        return {x, y}
+    }
+}
+
 const flow = [
-    "L_UD",
-    "C_UR",
-    "C_LU",
-    "C_BR",
     "C_LB",
-    "L_UD"
+    "C_LU",
+    "C_RU",
+    "C_RB",
+    "C_BL",
+    "L_RL",
+    "C_RB",
+    "L_LR",
+    "L_LR",
+    "C_UL",
+    "C_RU"
 ];
 
 let state = flow.shift();
@@ -94,9 +124,11 @@ class Ball {
     constructor(x, y, radius, color) {
         this.x = x
         this.y = y
+        lastBlock.x = x;
+        lastBlock.y = y;
         this.radius = radius;
         this.radians = Ball.D2R(arcMap[state].start);
-        this.velocity = 0.07;
+        this.velocity = 0.03;
         this.color = color;
     }
 
@@ -135,14 +167,22 @@ class Ball {
           currentState["end"] = this[axis] + currentState.direction * blockSize;
       }
 
-      this[axis] = this[axis] + currentState.direction * this.velocity * 50;
-      
+      this[axis] = this[axis] + currentState.direction * this.velocity * linearVelocity;
+
       if (currentState["operator"] === ">") {
           if (this[axis] < currentState["end"]) {
+              this.radians = null;
+              currentState["end"] = null;
+              lastBlock.x = this.x;
+              lastBlock.y = this.y;
               state = flow.shift();
           }
       } else {
           if (this[axis] > currentState["end"]) {
+              this.radians = null;
+              currentState["end"] = null;
+              lastBlock.x = this.x;
+              lastBlock.y = this.y;
               state = flow.shift();
           }
       }
@@ -166,21 +206,33 @@ class Ball {
             if(!this.radians){
                 this.radians = Ball.D2R(arcMap[state].start);
             }
+
             this.radians = this.radians + direction * this.velocity;
+
+            const {x, y} = curveAdjustment(state, lastBlock.x, lastBlock.y);
+
+            this.x = x + Math.cos(this.radians) * blockSize / 2;
+            this.y = y + Math.sin(this.radians) * blockSize / 2;
+
             if (operator === ">") {
                 if (this.radians < Ball.D2R(end)) {
+                    lastBlock.x = this.x;
+                    lastBlock.y = this.y;
                     this.updateStateAndRadians();
                 }
             } else {
                 if (this.radians > Ball.D2R(end)) {
+                    lastBlock.x = this.x;
+                    lastBlock.y = this.y;
                     this.updateStateAndRadians();
                 }
             }
-            this.x = this.x + Math.cos(this.radians) * 8;
-            this.y = this.y + Math.sin(this.radians) * 8;
+
         } else if (montionType === "L") {
           this.updateLinearState(arcMap[state]);
         }
+
+
     }
 }
 
